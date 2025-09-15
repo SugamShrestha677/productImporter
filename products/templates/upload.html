@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Product File</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        .form-container { max-width: 500px; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        .messages { list-style: none; padding: 0; }
+        .messages li.success { color: green; }
+        .messages li.error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Upload Product Data (CSV/Excel)</h2>
+        <p>Ensure your file has columns: <b>sku, name, price, quantity</b>. 'description' is optional.</p>
+        
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+</body>
+</html>
