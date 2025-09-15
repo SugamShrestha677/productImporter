@@ -22,3 +22,21 @@ def upload_file_view(request):
         form = FileUploadForm()
     
     return render(request, 'upload.html', {'form': form})
+
+
+
+# products/views.py
+
+# ... (keep your existing upload_file_view function) ...
+
+from rest_framework import viewsets
+from .models import Product
+from .serializers import ProductSerializer
+
+class ProductViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows products to be viewed or edited.
+    """
+    queryset = Product.objects.all().order_by('-added_on')
+    serializer_class = ProductSerializer
+    lookup_field = 'sku' # Use SKU for lookups instead of ID
