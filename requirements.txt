@@ -1,6 +1,10 @@
 # Django Framework
 django==4.2.5
 
+# rest framework
+djangorestframework==3.14.0
+
+
 # Data Handling
 pandas==2.1.0
 openpyxl==3.1.2
