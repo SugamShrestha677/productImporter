@@ -15,10 +15,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 # importer/urls.py
+# importer/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework import routers
+from products import views # Import views from your products app
+
+# Create a router and register our viewsets with it.
+router = routers.DefaultRouter()
+router.register(r'products', views.ProductViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('products.urls')), # Include your app's URLs
+    
+    # URL for your file upload page
+    path('', include('products.urls')),
+    
+    # URLs for your DRF API
+    path('api/', include(router.urls)),
 ]
