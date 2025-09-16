@@ -4,55 +4,51 @@ from .models import Product
 
 def import_products_from_file(file):
     try:
-        # Determine file type and read into a pandas DataFrame
-        if file.name.endswith('.csv'):
+        # Read file into DataFrame
+        if file.name.endswith(".csv"):
             df = pd.read_csv(file)
-        elif file.name.endswith(('.xls', '.xlsx')):
+        elif file.name.endswith(".xls") or file.name.endswith(".xlsx"):
             df = pd.read_excel(file)
         else:
-            return {"status": "error", "message": "Unsupported file format."}
+            return {"status": "error", "message": "File format not supported"}
 
-        # --- Enhanced Column Validation ---
-        required_columns = {'sku', 'name', 'price', 'quantity'}
-        if not required_columns.issubset(df.columns):
-            missing = required_columns - set(df.columns)
-            return {"status": "error", "message": f"Missing required columns: {', '.join(missing)}"}
+        # Basic check for required columns
+        required = ["sku", "name", "price", "quantity"]
+        for col in required:
+            if col not in df.columns:
+                return {"status": "error", "message": f"Missing column: {col}"}
 
-        created_count = 0
-        updated_count = 0
-        failed_rows = []
+        created = 0
+        updated = 0
+        errors = []
 
-        # Iterate over DataFrame rows
-        for index, row in df.iterrows():
+        for i, row in df.iterrows():
             try:
-                # --- Enhanced Data Validation ---
-                sku = str(row['sku']).strip()
+                sku = str(row["sku"]).strip()
                 if not sku:
-                    raise ValueError("SKU cannot be empty.")
-                
-                # Use update_or_create to handle duplication
-                _, created = Product.objects.update_or_create(
+                    continue  # skip rows without sku
+
+                product, is_created = Product.objects.update_or_create(
                     sku=sku,
                     defaults={
-                        'name': row['name'],
-                        'description': row.get('description', ''),
-                        'price': float(row['price']),  # Malformed data will raise ValueError here
-                        'quantity': int(row['quantity']), # Malformed data will raise ValueError here
-                    }
+                        "name": row["name"],
+                        "description": row["description"] if "description" in df.columns else "",
+                        "price": float(row["price"]),
+                        "quantity": int(row["quantity"]),
+                    },
                 )
-                if created:
-                    created_count += 1
+                if is_created:
+                    created += 1
                 else:
-                    updated_count += 1
-            except (ValueError, TypeError) as e:
-                # Catch malformed data errors for price/quantity
-                failed_rows.append(f"Row {index + 2}: {e} - Data: {row.to_dict()}")
+                    updated += 1
+            except Exception as e:
+                errors.append(f"Row {i+2}: {e}")
 
-        message = f"Successfully imported data. Created: {created_count}, Updated: {updated_count}."
-        if failed_rows:
-            message += f" Failed Rows: {len(failed_rows)}. Details: {'; '.join(failed_rows)}"
-        
-        return {"status": "success", "message": message}
+        msg = f"Imported. Created: {created}, Updated: {updated}"
+        if errors:
+            msg += f". Errors: {len(errors)} rows."
+
+        return {"status": "success", "message": msg}
 
     except Exception as e:
-        return {"status": "error", "message": f"An error occurred: {str(e)}"}
+        return {"status": "error", "message": str(e)}
